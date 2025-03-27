@@ -29,13 +29,9 @@ installAcme () {
   mkdir -p ${TEMP_PATH}
   cd ${TEMP_PATH}
   echo 'begin downloading acme.sh tool...'
-  ACME_SH_ADDRESS=`curl -L https://cdn.jsdelivr.net/gh/andyzhshg/syno-acme@master/acme.sh.address`
-  SRC_TAR_NAME=acme.sh.tar.gz
-  curl -L -o ${SRC_TAR_NAME} ${ACME_SH_ADDRESS}
-  SRC_NAME=`tar -tzf ${SRC_TAR_NAME} | head -1 | cut -f1 -d"/"`
-  tar zxvf ${SRC_TAR_NAME}
+  wget --no-check-certificate -O acme.sh https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh
+  chmod +x acme.sh
   echo 'begin installing acme.sh tool...'
-  cd ${SRC_NAME}
   ./acme.sh --install --nocron --home ${ACME_BIN_PATH}
   echo 'done installAcme'
   rm -rf ${TEMP_PATH}
@@ -48,8 +44,8 @@ generateCrt () {
   source config
   echo 'begin updating default cert by acme.sh tool'
   source ${ACME_BIN_PATH}/acme.sh.env
-  ${ACME_BIN_PATH}/acme.sh --force --log --issue --dns ${DNS} --dnssleep ${DNS_SLEEP} -d "${DOMAIN}" -d "*.${DOMAIN}"
-  ${ACME_BIN_PATH}/acme.sh --force --installcert -d ${DOMAIN} -d *.${DOMAIN} \
+  ${ACME_BIN_PATH}/acme.sh --force --log --server letsencrypt --issue --dns ${DNS} --dnssleep ${DNS_SLEEP} -d "${DOMAIN}" -d "*.${DOMAIN}"
+  ${ACME_BIN_PATH}/acme.sh --installcert -d ${DOMAIN} -d *.${DOMAIN} \
     --certpath ${CRT_PATH}/cert.pem \
     --key-file ${CRT_PATH}/privkey.pem \
     --fullchain-file ${CRT_PATH}/fullchain.pem
@@ -68,19 +64,22 @@ generateCrt () {
 updateService () {
   echo 'begin updateService'
   echo 'cp cert path to des'
-  /bin/python2 ${BASE_ROOT}/crt_cp.py ${CRT_PATH_NAME}
+  python3 ${BASE_ROOT}/crt_cp.py ${CRT_PATH_NAME}
   echo 'done updateService'
 }
 
+
 reloadWebService () {
   echo 'begin reloadWebService'
-  echo 'reloading new cert...'
-  /usr/syno/etc/rc.sysv/nginx.sh reload
-  echo 'relading Apache 2.2'
-  stop pkg-apache22
-  start pkg-apache22
-  reload pkg-apache22
-  echo 'done reloadWebService'  
+  
+  if systemctl list-units --type=service | grep -q nginx; then
+    echo 'Restarting Nginx...'
+    systemctl restart nginx
+  else
+    echo '[WARN] Nginx service not found, skipping restart.'
+  fi
+
+  echo 'done reloadWebService'
 }
 
 revertCrt () {
