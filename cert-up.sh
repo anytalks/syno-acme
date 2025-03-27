@@ -49,6 +49,14 @@ generateCrt () {
     --certpath ${CRT_PATH}/cert.pem \
     --key-file ${CRT_PATH}/privkey.pem \
     --fullchain-file ${CRT_PATH}/fullchain.pem
+	# 生成 PKCS#12 (.pfx) 证书
+	echo "Generating PKCS#12 (.pfx) certificate..."
+	openssl pkcs12 -export -out ${CRT_PATH}/cert.pfx \
+	-inkey ${CRT_PATH}/privkey.pem \
+	-in ${CRT_PATH}/fullchain.pem \
+	-certfile ${CRT_PATH}/fullchain.pem \
+	-passout pass:
+	echo "PKCS#12 (.pfx) certificate created at ${CRT_PATH}/cert.pfx"
 
   if [ -s "${CRT_PATH}/cert.pem" ]; then
     echo 'done generateCrt'
