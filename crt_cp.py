@@ -1,6 +1,6 @@
-#!/bin/python2
+#!/usr/bin/env python3
 
-# this script copies cert recorded in INFO file from src to des.
+# This script copies cert recorded in INFO file from src to des.
 
 import json
 import sys
@@ -23,23 +23,25 @@ INFO_FILE_PATH = ARCHIEV_PATH + '/INFO'
 
 services = []
 try:
-    info = json.load(open(INFO_FILE_PATH))
+    with open(INFO_FILE_PATH, 'r') as f:
+        info = json.load(f)
     services = info[SRC_DIR_NAME]['services']
-except:
-    print '[ERR] load INFO file- %s fail' %(INFO_FILE_PATH,) 
+except Exception as e:
+    print('[ERR] load INFO file - %s fail: %s' % (INFO_FILE_PATH, str(e)))
     sys.exit(1)
 
-CP_FROM_DIR = ARCHIEV_PATH + '/' + SRC_DIR_NAME
+CP_FROM_DIR = os.path.join(ARCHIEV_PATH, SRC_DIR_NAME)
 for service in services:
-    print 'Copy cert for %s' %(service['display_name'])
+    print('Copy cert for %s' % (service['display_name']))
     if service['isPkg']:
-        CP_TO_DIR = '%s/%s/%s' %(PKG_CERT_BASE_PATH, service['subscriber'], service['service'])
+        CP_TO_DIR = os.path.join(PKG_CERT_BASE_PATH, service['subscriber'], service['service'])
     else:
-        CP_TO_DIR = '%s/%s/%s' % (CERT_BASE_PATH, service['subscriber'], service['service'])
+        CP_TO_DIR = os.path.join(CERT_BASE_PATH, service['subscriber'], service['service'])
+    
     for f in CERT_FILES:
-        src = CP_FROM_DIR + '/' + f 
-        des = CP_TO_DIR + '/' + f
+        src = os.path.join(CP_FROM_DIR, f)
+        des = os.path.join(CP_TO_DIR, f)
         try:
             shutil.copy2(src, des)
-        except:
-            print '[WRN] copy from %s to %s fail' %(src, des)
+        except Exception as e:
+            print('[WRN] copy from %s to %s fail: %s' % (src, des, str(e)))
