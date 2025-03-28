@@ -57,7 +57,6 @@ generateCrt () {
 	-certfile ${CRT_PATH}/fullchain.pem \
 	-passout pass:
 	echo "PKCS#12 (.pfx) certificate created at ${CRT_PATH}/cert.pfx"
-
   if [ -s "${CRT_PATH}/cert.pem" ]; then
     echo 'done generateCrt'
     return 0
@@ -76,17 +75,14 @@ updateService () {
   echo 'done updateService'
 }
 
-
 reloadWebService () {
   echo 'begin reloadWebService'
-  
   if systemctl list-units --type=service | grep -q nginx; then
     echo 'Restarting Nginx...'
     systemctl restart nginx
   else
     echo '[WARN] Nginx service not found, skipping restart.'
   fi
-
   echo 'done reloadWebService'
 }
 
